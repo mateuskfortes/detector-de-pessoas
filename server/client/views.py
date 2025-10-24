@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.views import View
+from django.http import JsonResponse
 
 from PIL import Image
 import io
@@ -12,21 +13,37 @@ class ClassifierView(View):
     def get(self, request):
         return render(request, "index.html")
     def post(self, request):
-        uploaded_file = request.FILES['image']
-        
-        image_bytes = uploaded_file.read()
-        image = Image.open(io.BytesIO(image_bytes))
-        
-        result = model.predict(image)
-        boxes = result[0].boxes
+        uploaded_file = request.FILES.get('image')
+        if not uploaded_file:
+            return JsonResponse({'error': 'Nenhuma imagem enviada.'}, status=400)
 
-        # Cada caixa tem:
-        # - .xyxy: coordenadas do box [x1, y1, x2, y2]
-        # - .cls: índice da classe (número)
-        # - .conf: confiança da detecção
+        try:
+            # Lê e converte a imagem
+            image_bytes = uploaded_file.read()
+            image = Image.open(io.BytesIO(image_bytes))
 
-        for box in boxes:
-            class_id = int(box.cls[0])     # índice da classe
-            confidence = float(box.conf[0]) if box.conf is not None else None
-            class_name = result[0].names[class_id]
-            return render(request, "index.html", {"classification": f"Classe: {class_name}, Confiança: {confidence:.2f}"})
+            # Realiza a predição
+            results = model.predict(image)
+            boxes = results[0].boxes
+
+            # Se nenhuma detecção foi encontrada
+            if not boxes:
+                return JsonResponse({
+                    'classification': 'Nenhum objeto detectado'
+                })
+
+            # Pega a detecção com maior confiança
+            best_box = max(boxes, key=lambda b: float(b.conf[0]))
+            class_id = int(best_box.cls[0])
+            confidence = float(best_box.conf[0])
+            class_name = results[0].names[class_id]
+
+            # Retorna o resultado em JSON
+            return JsonResponse({
+                'classification': class_name,
+                'confidence': round(confidence, 3),
+                'num_detections': len(boxes),
+            })
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)

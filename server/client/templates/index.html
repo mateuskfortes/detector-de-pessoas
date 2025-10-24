@@ -2,84 +2,166 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Object Classifier</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Classificador de Imagem</title>
 
-	<!-- Tailwind CSS CDN -->
-	<script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    #previewContainer.hidden { display: none; }
+  </style>
 </head>
 <body class="bg-gray-100 text-gray-900">
-	<nav class="bg-white shadow">
-		<div class="container mx-auto px-4 py-4 flex justify-between items-center">
-			<div class="flex items-center gap-3">
-				<a href="/" class="text-xl font-semibold">Object Classifier</a>
-			</div>
-			<ul class="flex gap-6">
-				<li><a href="/" class="text-gray-700 hover:text-blue-600">Início</a></li>
-				<li><a href="#" class="text-gray-700 hover:text-blue-600">Sobre</a></li>
-			</ul>
-		</div>
-	</nav>
+  <!-- Navbar -->
+  <nav class="bg-white shadow">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="/" class="text-xl font-semibold">Object Classifier</a>
+      <ul class="flex gap-6">
+        <li><a href="/" class="text-gray-700 hover:text-blue-600">Início</a></li>
+        <li><a href="#" class="text-gray-700 hover:text-blue-600">Sobre</a></li>
+      </ul>
+    </div>
+  </nav>
 
-	<main class="container mx-auto px-4 py-10 max-w-3x1">
-		<h1 class="text-4xl font-bold mb-6 text-center">Classifique sua Imagem</h1>
+  <!-- Main -->
+  <main class="container mx-auto px-4 py-10 max-w-3xl">
+    <h1 class="text-4xl font-bold mb-6 text-center">Classifique sua Imagem</h1>
 
-		<form method="post" enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md" id="uploadForm">
-			{% csrf_token %}
-			<div class="mb-4">
-				<label for="image" class="block text-gray-700 font-semibold mb-2">Selecione uma imagem para classificar</label>
-				<input 
-					type="file" 
-					name="image" 
-					id="image" 
-					required 
-					accept="image/*"
-					class="w-full border border-gray-300 rounded p-2 cursor-pointer"
-					onchange="previewImage(event)"
-				/>
-			</div>
+    <form id="uploadForm" class="bg-white p-6 rounded shadow-md" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label for="image" class="block text-gray-700 font-semibold mb-2">Selecione uma imagem</label>
+        <input
+          id="image"
+          name="image"
+          type="file"
+          accept="image/*"
+          required
+          class="w-full border border-gray-300 rounded p-2 cursor-pointer"
+        />
+      </div>
 
-			<!-- Preview da imagem selecionada -->
-			<div id="previewContainer" class="mb-4 hidden">
-				<p class="text-gray-600 mb-2 font-semibold">Pré-visualização:</p>
-				<img id="preview" src="#" alt="Pré-visualização da imagem" class="mx-auto max-h-64 rounded shadow-md border border-gray-300 object-contain" />
-			</div>
+      <div id="previewContainer" class="mb-4 hidden">
+        <p class="text-gray-600 mb-2 font-semibold">Pré-visualização:</p>
+        <img id="preview" src="#" alt="Pré-visualização" class="mx-auto max-h-64 rounded shadow-md border border-gray-300 object-contain" />
+      </div>
 
-			<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Classificar</button>
-		</form>
+      <button id="submitBtn" type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+        Classificar
+      </button>
+    </form>
 
-		{% if classification %}
-		<div class="mt-10 bg-white p-6 rounded shadow-md text-center">
-			<h2 class="text-2xl font-semibold mb-4">Resultado da Classificação</h2>
-			<p class="text-lg mb-4">A imagem foi classificada como:</p>
-			<p class="text-3xl font-bold text-blue-600">{{ classification }}</p>
-		</div>
-		{% endif %}
-	</main>
+    <div id="result" class="mt-10 bg-white p-6 rounded shadow-md text-center hidden">
+      <h2 class="text-2xl font-semibold mb-4">Resultado da Classificação</h2>
+      <p class="text-lg mb-4">A imagem foi classificada como:</p>
+      <p id="classificationText" class="text-3xl font-bold text-blue-600"></p>
+      <div id="meta" class="mt-4 text-sm text-gray-600"></div>
+    </div>
 
-	<footer class="bg-white shadow mt-10 py-6 text-center text-gray-500">
-		<small>&copy; {{ now.year }} Object Classifier</small>
-	</footer>
+    <div id="error" class="mt-6 text-red-600 text-center font-semibold hidden"></div>
+  </main>
 
-	<script>
-		function previewImage(event) {
-			const previewContainer = document.getElementById('previewContainer');
-			const preview = document.getElementById('preview');
-			const file = event.target.files[0];
+  <!-- Footer -->
+  <footer class="bg-white shadow mt-10 py-6 text-center text-gray-500">
+    <small>&copy; {{ now.year }} Object Classifier</small>
+  </footer>
 
-			if(file) {
-				const reader = new FileReader();
-				reader.onload = function(e) {
-					preview.src = e.target.result;
-					previewContainer.classList.remove('hidden');
-				}
-				reader.readAsDataURL(file);
-			} else {
-				preview.src = "#";
-				previewContainer.classList.add('hidden');
-			}
-		}
-	</script>
+  <!-- Script -->
+  <script>
+    // Lê cookie (para pegar csrftoken)
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+
+    const imageInput = document.getElementById('image');
+    const previewContainer = document.getElementById('previewContainer');
+    const preview = document.getElementById('preview');
+    const form = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultBox = document.getElementById('result');
+    const classificationText = document.getElementById('classificationText');
+    const metaBox = document.getElementById('meta');
+    const errorBox = document.getElementById('error');
+
+    // Mostra pré-visualização da imagem
+    imageInput.addEventListener('change', function (event) {
+      const file = event.target.files[0];
+      if (!file) {
+        preview.src = '#';
+        previewContainer.classList.add('hidden');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+        previewContainer.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Envia o formulário via fetch (sem recarregar a página)
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      errorBox.classList.add('hidden');
+      resultBox.classList.add('hidden');
+      submitBtn.disabled = true;
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Classificando...';
+
+      const file = imageInput.files[0];
+      if (!file) {
+        errorBox.textContent = 'Selecione uma imagem antes de enviar.';
+        errorBox.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const csrftoken = getCookie('csrftoken');
+
+      try {
+        const res = await fetch('/', {
+          method: 'POST',
+          body: formData,
+          headers: csrftoken ? { 'X-CSRFToken': csrftoken } : {}
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => null);
+          throw new Error(`Erro ${res.status}${text ? ': ' + text : ''}`);
+        }
+
+        const data = await res.json();
+
+        const cls = data.classification || data.label || 'Desconhecido';
+        classificationText.textContent = cls;
+        metaBox.innerHTML = `
+          ${data.width ? 'Largura: ' + data.width + 'px<br/>' : ''}
+          ${data.height ? 'Altura: ' + data.height + 'px<br/>' : ''}
+          ${data.format ? 'Formato: ' + data.format + '<br/>' : ''}
+        `;
+        resultBox.classList.remove('hidden');
+
+        // 🔹 mantém a imagem visível
+        previewContainer.classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+        errorBox.textContent = 'Falha ao classificar a imagem. Verifique o backend.';
+        errorBox.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+  </script>
 </body>
 </html>

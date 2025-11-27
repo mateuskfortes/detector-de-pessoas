@@ -1,0 +1,16 @@
+#previewContainer.hidden {
+  display: none;
+}
+
+#imageWrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}

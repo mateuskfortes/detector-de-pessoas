@@ -1,0 +1,51 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Câmera - Object
+Classifier{% endblock %} {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/camera.css' %}" />
+{% endblock %} {% block content %}
+<div class="container mx-auto px-4 py-10 max-w-3xl">
+  <h1 class="text-4xl font-bold mb-6 text-center">Detecção ao Vivo</h1>
+
+  <div class="bg-white p-6 rounded shadow-md">
+    <div class="mb-4 flex justify-center">
+      <div id="videoWrapper" class="relative inline-block">
+        <video id="video" autoplay playsinline class="hidden"></video>
+        <div id="lastFrameWrapper" class="relative inline-block">
+          <img
+            id="lastFrame"
+            src="#"
+            alt="Último frame"
+            class="max-h-96 rounded shadow-md border border-gray-300 object-contain hidden"
+          />
+          <canvas id="cameraCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-4">
+      <button
+        id="startCamera"
+        class="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+      >
+        Iniciar Detecção
+      </button>
+      <button
+        id="stopCamera"
+        class="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700 transition hidden"
+      >
+        Parar Detecção
+      </button>
+    </div>
+
+    <div class="mt-4 text-center">
+      <span id="cameraStatus" class="text-gray-600"></span>
+    </div>
+  </div>
+
+  <div
+    id="error"
+    class="mt-6 text-red-600 text-center font-semibold hidden"
+  ></div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="{% static 'js/camera.js' %}"></script>
+{% endblock %}

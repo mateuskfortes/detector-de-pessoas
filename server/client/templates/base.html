@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{% block title %}Object Classifier{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body class="bg-gray-100 text-gray-900">
+    <!-- Navbar -->
+    <nav class="bg-white shadow">
+      <div
+        class="container mx-auto px-4 py-4 flex justify-between items-center"
+      >
+        <a href="{% url 'home' %}" class="text-xl font-semibold">home</a>
+        <ul class="flex gap-6">
+          <li>
+            <a
+              href="{% url 'upload' %}"
+              class="text-gray-700 hover:text-blue-600"
+              >Upload</a
+            >
+          </li>
+          <li>
+            <a
+              href="{% url 'camera' %}"
+              class="text-gray-700 hover:text-blue-600"
+              >Câmera</a
+            >
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>{% block content %}{% endblock %}</main>
+
+    <!-- Footer -->
+    <footer class="bg-white shadow mt-10 py-6 text-center text-gray-500">
+      <small>&copy; 2024 Object Classifier</small>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

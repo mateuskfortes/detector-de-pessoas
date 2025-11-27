@@ -138,12 +138,6 @@ async function detectFromCamera() {
   try {
     isProcessing = true;
 
-    const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = video.videoWidth;
-    tempCanvas.height = video.videoHeight;
-    const tempCtx = tempCanvas.getContext("2d");
-    tempCtx.drawImage(video, 0, 0);
-
     const dataUrl = tempCanvas.toDataURL("image/jpeg", 0.8);
     lastFrame.src = dataUrl;
     lastFrame.classList.remove("hidden");

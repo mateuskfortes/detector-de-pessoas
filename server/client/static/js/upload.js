@@ -89,9 +89,6 @@ function drawAllBoundingBoxes(allPeople) {
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
-  errorBox.classList.add("hidden");
-  resultBox.classList.add("hidden");
-  allPeopleInfo.classList.add("hidden");
   submitBtn.disabled = true;
   const originalText = submitBtn.textContent;
   submitBtn.textContent = "Detectando...";

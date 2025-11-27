@@ -1,292 +1,662 @@
 {% load static %}
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-br">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Classificador de Imagem</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Classificador de Imagem</title>
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-  <style>
-    #previewContainer.hidden { display: none; }
-    #imageWrapper {
-      position: relative;
-      display: inline-block;
-      max-width: 100%;
-    }
-    #canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-    }
-  </style>
-</head>
-<body class="bg-gray-100 text-gray-900">
-  <!-- Navbar -->
-  <nav class="bg-white shadow">
-    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-      <a href="/" class="text-xl font-semibold">Object Classifier</a>
-      <ul class="flex gap-6">
-        <li><a href="/" class="text-gray-700 hover:text-blue-600">Início</a></li>
-        <li><a href="#" class="text-gray-700 hover:text-blue-600">Sobre</a></li>
-      </ul>
-    </div>
-  </nav>
-
-  <!-- Main -->
-  <main class="container mx-auto px-4 py-10 max-w-3xl">
-    <h1 class="text-4xl font-bold mb-6 text-center">Classifique sua Imagem</h1>
-
-    <form id="uploadForm" class="bg-white p-6 rounded shadow-md" enctype="multipart/form-data">
-      {% csrf_token %}
-      <div class="mb-4">
-        <label for="image" class="block text-gray-700 font-semibold mb-2">Selecione uma imagem</label>
-        <input
-          id="image"
-          name="image"
-          type="file"
-          accept="image/*"
-          required
-          class="w-full border border-gray-300 rounded p-2 cursor-pointer"
-        />
+    <style>
+      #previewContainer.hidden {
+        display: none;
+      }
+      #cameraContainer.hidden {
+        display: none;
+      }
+      #imageWrapper {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+      }
+      #canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+      }
+      #video {
+        max-height: 480px;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 text-gray-900">
+    <!-- Navbar -->
+    <nav class="bg-white shadow">
+      <div
+        class="container mx-auto px-4 py-4 flex justify-between items-center"
+      >
+        <a href="/" class="text-xl font-semibold">Object Classifier</a>
+        <ul class="flex gap-6">
+          <li>
+            <a href="/" class="text-gray-700 hover:text-blue-600">Início</a>
+          </li>
+          <li>
+            <a href="#" class="text-gray-700 hover:text-blue-600">Sobre</a>
+          </li>
+        </ul>
       </div>
+    </nav>
 
-      <div id="previewContainer" class="mb-4 hidden">
-        <p class="text-gray-600 mb-2 font-semibold">Pré-visualização:</p>
-        <div class="flex justify-center">
-          <div id="imageWrapper">
-            <img id="preview" src="#" alt="Pré-visualização" class="max-h-96 rounded shadow-md border border-gray-300 object-contain" />
-            <canvas id="canvas"></canvas>
-          </div>
+    <!-- Main -->
+    <main class="container mx-auto px-4 py-10 max-w-3xl">
+      <h1 class="text-4xl font-bold mb-6 text-center">
+        Classifique sua Imagem
+      </h1>
+
+      <!-- Seletor de Modo -->
+      <div class="bg-white p-4 rounded shadow-md mb-6">
+        <label class="block text-gray-700 font-semibold mb-2"
+          >Modo de Captura</label
+        >
+        <div class="flex gap-4">
+          <button
+            id="fileMode"
+            class="flex-1 py-2 px-4 rounded bg-blue-600 text-white font-semibold"
+          >
+            📁 Upload de Arquivo
+          </button>
+          <button
+            id="cameraMode"
+            class="flex-1 py-2 px-4 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
+          >
+            📷 Câmera ao Vivo
+          </button>
         </div>
       </div>
 
-      <button id="submitBtn" type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
-        Classificar
-      </button>
-    </form>
+      <!-- Upload de Arquivo -->
+      <form
+        id="uploadForm"
+        class="bg-white p-6 rounded shadow-md"
+        enctype="multipart/form-data"
+      >
+        {% csrf_token %}
+        <div class="mb-4">
+          <label for="image" class="block text-gray-700 font-semibold mb-2"
+            >Selecione uma imagem</label
+          >
+          <input
+            id="image"
+            name="image"
+            type="file"
+            accept="image/*"
+            required
+            class="w-full border border-gray-300 rounded p-2 cursor-pointer"
+          />
+        </div>
 
-    <div id="result" class="mt-10 bg-white p-6 rounded shadow-md hidden">
-      <h2 class="text-2xl font-semibold mb-4 text-center">Resultado da Classificação</h2>
-      
-      <div class="bg-blue-50 p-4 rounded mb-6 text-center">
-        <p id="classificationText" class="text-2xl font-bold text-blue-600"></p>
+        <div id="previewContainer" class="mb-4 hidden">
+          <p class="text-gray-600 mb-2 font-semibold">Pré-visualização:</p>
+          <div class="flex justify-center">
+            <div id="imageWrapper">
+              <img
+                id="preview"
+                src="#"
+                alt="Pré-visualização"
+                class="max-h-96 rounded shadow-md border border-gray-300 object-contain"
+              />
+              <canvas id="canvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <button
+          id="submitBtn"
+          type="submit"
+          class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+        >
+          Classificar
+        </button>
+      </form>
+
+      <!-- Câmera ao Vivo -->
+      <div id="cameraContainer" class="bg-white p-6 rounded shadow-md hidden">
+        <div class="mb-4 flex justify-center">
+          <div id="videoWrapper" class="relative inline-block">
+            <video id="video" autoplay playsinline class="hidden"></video>
+            <div id="lastFrameWrapper" class="relative inline-block">
+              <img
+                id="lastFrame"
+                src="#"
+                alt="Último frame"
+                class="max-h-96 rounded shadow-md border border-gray-300 object-contain hidden"
+              />
+              <canvas
+                id="cameraCanvas"
+                class="absolute top-0 left-0 pointer-events-none"
+              ></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-4">
+          <button
+            id="startCamera"
+            class="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+          >
+            ▶️ Iniciar Detecção
+          </button>
+          <button
+            id="stopCamera"
+            class="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700 transition hidden"
+          >
+            ⏸️ Parar Detecção
+          </button>
+        </div>
+
+        <div class="mt-4 text-center">
+          <span id="cameraStatus" class="text-gray-600"></span>
+        </div>
       </div>
 
-      <div id="allPeopleInfo" class="hidden">
-        <h3 class="font-semibold mb-3 text-lg">Todas as Pessoas Detectadas</h3>
-        <div id="peopleList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+      <div id="result" class="mt-10 bg-white p-6 rounded shadow-md hidden">
+        <h2 class="text-2xl font-semibold mb-4 text-center">
+          Resultado da Classificação
+        </h2>
+
+        <div class="bg-blue-50 p-4 rounded mb-6 text-center">
+          <p
+            id="classificationText"
+            class="text-2xl font-bold text-blue-600"
+          ></p>
+        </div>
+
+        <div id="allPeopleInfo" class="hidden">
+          <h3 class="font-semibold mb-3 text-lg">
+            Todas as Pessoas Detectadas
+          </h3>
+          <div id="peopleList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+        </div>
       </div>
-    </div>
 
-    <div id="error" class="mt-6 text-red-600 text-center font-semibold hidden"></div>
-  </main>
+      <div
+        id="error"
+        class="mt-6 text-red-600 text-center font-semibold hidden"
+      ></div>
+    </main>
 
-  <!-- Footer -->
-  <footer class="bg-white shadow mt-10 py-6 text-center text-gray-500">
-    <small>&copy; {{ now.year }} Object Classifier</small>
-  </footer>
+    <!-- Footer -->
+    <footer class="bg-white shadow mt-10 py-6 text-center text-gray-500">
+      <small>&copy; {{ now.year }} Object Classifier</small>
+    </footer>
 
-  <!-- Script -->
-  <script>
-    // Lê cookie (para pegar csrftoken)
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-      return null;
-    }
-
-    // Cores para cada pessoa detectada
-    const colors = [
-      '#3B82F6', // azul
-      '#EF4444', // vermelho
-      '#10B981', // verde
-      '#F59E0B', // laranja
-      '#8B5CF6', // roxo
-      '#EC4899', // rosa
-      '#14B8A6', // teal
-      '#F97316'  // laranja escuro
-    ];
-
-    const imageInput = document.getElementById('image');
-    const previewContainer = document.getElementById('previewContainer');
-    const preview = document.getElementById('preview');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const form = document.getElementById('uploadForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const resultBox = document.getElementById('result');
-    const classificationText = document.getElementById('classificationText');
-    const allPeopleInfo = document.getElementById('allPeopleInfo');
-    const peopleList = document.getElementById('peopleList');
-    const errorBox = document.getElementById('error');
-
-    // Mostra pré-visualização da imagem
-    imageInput.addEventListener('change', function (event) {
-      const file = event.target.files[0];
-      if (!file) {
-        preview.src = '#';
-        previewContainer.classList.add('hidden');
-        return;
+    <!-- Script -->
+    <script>
+      // Lê cookie (para pegar csrftoken)
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+        return null;
       }
 
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        preview.src = e.target.result;
-        preview.onload = function() {
-          // Ajusta o canvas ao tamanho da imagem exibida
-          canvas.width = preview.offsetWidth;
-          canvas.height = preview.offsetHeight;
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-        };
-        previewContainer.classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
-    });
+      // Cores para cada pessoa detectada
+      const colors = [
+        "#3B82F6", // azul
+        "#EF4444", // vermelho
+        "#10B981", // verde
+        "#F59E0B", // laranja
+        "#8B5CF6", // roxo
+        "#EC4899", // rosa
+        "#14B8A6", // teal
+        "#F97316", // laranja escuro
+      ];
 
-    // Função para desenhar todas as bounding boxes
-    function drawAllBoundingBoxes(allPeople) {
-      if (!allPeople || allPeople.length === 0) return;
+      const imageInput = document.getElementById("image");
+      const previewContainer = document.getElementById("previewContainer");
+      const preview = document.getElementById("preview");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const form = document.getElementById("uploadForm");
+      const submitBtn = document.getElementById("submitBtn");
+      const resultBox = document.getElementById("result");
+      const classificationText = document.getElementById("classificationText");
+      const allPeopleInfo = document.getElementById("allPeopleInfo");
+      const peopleList = document.getElementById("peopleList");
+      const errorBox = document.getElementById("error");
 
-      const scaleX = preview.offsetWidth / preview.naturalWidth;
-      const scaleY = preview.offsetHeight / preview.naturalHeight;
+      const fileMode = document.getElementById("fileMode");
+      const cameraMode = document.getElementById("cameraMode");
+      const cameraContainer = document.getElementById("cameraContainer");
+      const video = document.getElementById("video");
+      const lastFrame = document.getElementById("lastFrame");
+      const lastFrameWrapper = document.getElementById("lastFrameWrapper");
+      const cameraCanvas = document.getElementById("cameraCanvas");
+      const cameraCtx = cameraCanvas.getContext("2d");
+      const startCamera = document.getElementById("startCamera");
+      const stopCamera = document.getElementById("stopCamera");
+      const cameraStatus = document.getElementById("cameraStatus");
 
-      // Limpa o canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let stream = null;
+      let detectionInterval = null;
+      let isDetecting = false;
+      let isProcessing = false; // Flag para bloquear envios simultâneos
 
-      // Desenha cada pessoa detectada
-      allPeople.forEach((person, index) => {
-        const pos = person.position.xyxy;
-        const x1 = pos.x1 * scaleX;
-        const y1 = pos.y1 * scaleY;
-        const x2 = pos.x2 * scaleX;
-        const y2 = pos.y2 * scaleY;
+      // Alterna entre modo arquivo e câmera
+      fileMode.addEventListener("click", () => {
+        fileMode.classList.add("bg-blue-600", "text-white");
+        fileMode.classList.remove("bg-gray-200", "text-gray-700");
+        cameraMode.classList.add("bg-gray-200", "text-gray-700");
+        cameraMode.classList.remove("bg-blue-600", "text-white");
 
-        const width = x2 - x1;
-        const height = y2 - y1;
-
-        // Seleciona uma cor diferente para cada pessoa
-        const color = colors[index % colors.length];
-
-        // Desenha o retângulo
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x1, y1, width, height);
-
-        // Adiciona preenchimento semi-transparente
-        ctx.fillStyle = color + '1A'; // 10% de opacidade
-        ctx.fillRect(x1, y1, width, height);
-
-        // Desenha o label com o número da pessoa e confiança
-        const label = `Pessoa ${index + 1} (${(person.confidence * 100).toFixed(1)}%)`;
-        
-        ctx.font = 'bold 14px Arial';
-        const textWidth = ctx.measureText(label).width;
-        
-        // Fundo do label
-        ctx.fillStyle = color;
-        ctx.fillRect(x1, y1 - 25, textWidth + 10, 25);
-        
-        // Texto do label
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillText(label, x1 + 5, y1 - 7);
+        form.classList.remove("hidden");
+        cameraContainer.classList.add("hidden");
+        stopCameraDetection();
       });
-    }
 
-    // Envia o formulário via fetch (sem recarregar a página)
-    form.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      errorBox.classList.add('hidden');
-      resultBox.classList.add('hidden');
-      allPeopleInfo.classList.add('hidden');
-      submitBtn.disabled = true;
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = 'Classificando...';
+      cameraMode.addEventListener("click", () => {
+        cameraMode.classList.add("bg-blue-600", "text-white");
+        cameraMode.classList.remove("bg-gray-200", "text-gray-700");
+        fileMode.classList.add("bg-gray-200", "text-gray-700");
+        fileMode.classList.remove("bg-blue-600", "text-white");
 
-      // Limpa o canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+        form.classList.add("hidden");
+        cameraContainer.classList.remove("hidden");
+        resultBox.classList.add("hidden");
+        errorBox.classList.add("hidden");
+      });
 
-      const file = imageInput.files[0];
-      if (!file) {
-        errorBox.textContent = 'Selecione uma imagem antes de enviar.';
-        errorBox.classList.remove('hidden');
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
-        return;
+      // Inicia a câmera
+      startCamera.addEventListener("click", async () => {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          });
+          video.srcObject = stream;
+
+          video.onloadedmetadata = () => {
+            // Não precisamos mais ajustar o canvas aqui
+          };
+
+          startCamera.classList.add("hidden");
+          stopCamera.classList.remove("hidden");
+
+          // Inicia detecção automática a cada 1 segundo
+          isDetecting = true;
+          isProcessing = false;
+          detectFromCamera();
+          detectionInterval = setInterval(detectFromCamera, 1000);
+
+          cameraStatus.textContent = "🟢 Detectando a cada 1 segundo...";
+        } catch (err) {
+          console.error("Erro ao acessar câmera:", err);
+          errorBox.textContent = "Não foi possível acessar a câmera.";
+          errorBox.classList.remove("hidden");
+        }
+      });
+
+      // Para a câmera
+      stopCamera.addEventListener("click", () => {
+        stopCameraDetection();
+        startCamera.classList.remove("hidden");
+        stopCamera.classList.add("hidden");
+        cameraStatus.textContent = "";
+        lastFrame.classList.add("hidden");
+      });
+
+      function stopCameraDetection() {
+        isDetecting = false;
+        isProcessing = false;
+        if (detectionInterval) {
+          clearInterval(detectionInterval);
+          detectionInterval = null;
+        }
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
+        cameraCtx.clearRect(0, 0, cameraCanvas.width, cameraCanvas.height);
       }
 
-      const formData = new FormData();
-      formData.append('image', file);
+      // Detecta pessoas na câmera
+      async function detectFromCamera() {
+        if (!isDetecting || !video.srcObject) return;
 
-      const csrftoken = getCookie('csrftoken');
-
-      try {
-        const res = await fetch('/', {
-          method: 'POST',
-          body: formData,
-          headers: csrftoken ? { 'X-CSRFToken': csrftoken } : {}
-        });
-
-        if (!res.ok) {
-          const text = await res.text().catch(() => null);
-          throw new Error(`Erro ${res.status}${text ? ': ' + text : ''}`);
+        // Se já está processando uma imagem, pula esta iteração
+        if (isProcessing) {
+          console.log("Aguardando resposta anterior...");
+          return;
         }
 
-        const data = await res.json();
+        try {
+          isProcessing = true; // Bloqueia novos envios
 
-        classificationText.textContent = data.classification || 'Nenhuma pessoa detectada';
+          // Captura frame do vídeo
+          const tempCanvas = document.createElement("canvas");
+          tempCanvas.width = video.videoWidth;
+          tempCanvas.height = video.videoHeight;
+          const tempCtx = tempCanvas.getContext("2d");
+          tempCtx.drawImage(video, 0, 0);
 
-        // Se há pessoas detectadas, mostra informações detalhadas
-        if (data.all_people && data.all_people.length > 0) {
-          allPeopleInfo.classList.remove('hidden');
-          peopleList.innerHTML = '';
+          // Atualiza a imagem exibida com o frame capturado
+          const dataUrl = tempCanvas.toDataURL("image/jpeg", 0.8);
+          lastFrame.src = dataUrl;
+          lastFrame.classList.remove("hidden");
 
-          // Desenha todas as bounding boxes
-          drawAllBoundingBoxes(data.all_people);
+          // Ajusta o canvas ao tamanho da imagem exibida
+          lastFrame.onload = () => {
+            cameraCanvas.width = lastFrame.offsetWidth;
+            cameraCanvas.height = lastFrame.offsetHeight;
+          };
 
-          // Cria card para cada pessoa
-          data.all_people.forEach((person, index) => {
-            const color = colors[index % colors.length];
-            const personCard = document.createElement('div');
-            personCard.className = 'bg-gray-50 p-4 rounded border-l-4';
-            personCard.style.borderLeftColor = color;
-            
-            personCard.innerHTML = `
+          // Converte para blob
+          const blob = await new Promise((resolve) =>
+            tempCanvas.toBlob(resolve, "image/jpeg", 0.8)
+          );
+
+          const formData = new FormData();
+          formData.append("image", blob, "camera.jpg");
+
+          const csrftoken = getCookie("csrftoken");
+
+          const res = await fetch("/", {
+            method: "POST",
+            body: formData,
+            headers: csrftoken ? { "X-CSRFToken": csrftoken } : {},
+          });
+
+          if (!res.ok) throw new Error(`Erro ${res.status}`);
+
+          const data = await res.json();
+
+          // Atualiza status
+          cameraStatus.textContent = `🟢 ${
+            data.classification || "Nenhuma pessoa detectada"
+          }`;
+
+          // Desenha bounding boxes no canvas sobre a imagem capturada
+          drawCameraBoundingBoxes(data.all_people);
+
+          // Atualiza resultado
+          classificationText.textContent =
+            data.classification || "Nenhuma pessoa detectada";
+
+          if (data.all_people && data.all_people.length > 0) {
+            allPeopleInfo.classList.remove("hidden");
+            peopleList.innerHTML = "";
+
+            data.all_people.forEach((person, index) => {
+              const color = colors[index % colors.length];
+              const personCard = document.createElement("div");
+              personCard.className = "bg-gray-50 p-4 rounded border-l-4";
+              personCard.style.borderLeftColor = color;
+
+              personCard.innerHTML = `
               <div class="flex justify-between items-start mb-2">
-                <h4 class="font-semibold text-lg" style="color: ${color}">Pessoa ${index + 1}</h4>
+                <h4 class="font-semibold text-lg" style="color: ${color}">Pessoa ${
+                index + 1
+              }</h4>
                 <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">
                   ${(person.confidence * 100).toFixed(1)}% confiança
                 </span>
               </div>
               <div class="grid grid-cols-2 gap-2 text-sm text-gray-700">
                 <div>
-                  <span class="font-medium">Centro:</span> (${person.position.xywh.center_x}, ${person.position.xywh.center_y})
+                  <span class="font-medium">Centro:</span> (${
+                    person.position.xywh.center_x
+                  }, ${person.position.xywh.center_y})
                 </div>
                 <div>
-                  <span class="font-medium">Tamanho:</span> ${person.position.xywh.width}×${person.position.xywh.height}
+                  <span class="font-medium">Tamanho:</span> ${
+                    person.position.xywh.width
+                  }×${person.position.xywh.height}
                 </div>
               </div>
             `;
-            
-            peopleList.appendChild(personCard);
-          });
+
+              peopleList.appendChild(personCard);
+            });
+          } else {
+            allPeopleInfo.classList.add("hidden");
+          }
+
+          resultBox.classList.remove("hidden");
+          errorBox.classList.add("hidden");
+        } catch (err) {
+          console.error("Erro na detecção:", err);
+          cameraStatus.textContent = "🔴 Erro na detecção";
+        } finally {
+          isProcessing = false; // Libera para próximo envio
+        }
+      }
+
+      // Desenha bounding boxes na câmera
+      function drawCameraBoundingBoxes(allPeople) {
+        if (!allPeople || allPeople.length === 0) {
+          cameraCtx.clearRect(0, 0, cameraCanvas.width, cameraCanvas.height);
+          return;
         }
 
-        resultBox.classList.remove('hidden');
-        previewContainer.classList.remove('hidden');
-      } catch (err) {
-        console.error(err);
-        errorBox.textContent = 'Falha ao classificar a imagem. Verifique o backend.';
-        errorBox.classList.remove('hidden');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        // Usa as dimensões da imagem original para calcular a escala
+        const scaleX = lastFrame.offsetWidth / lastFrame.naturalWidth;
+        const scaleY = lastFrame.offsetHeight / lastFrame.naturalHeight;
+
+        cameraCtx.clearRect(0, 0, cameraCanvas.width, cameraCanvas.height);
+
+        allPeople.forEach((person, index) => {
+          const pos = person.position.xyxy;
+          const x1 = pos.x1 * scaleX;
+          const y1 = pos.y1 * scaleY;
+          const x2 = pos.x2 * scaleX;
+          const y2 = pos.y2 * scaleY;
+
+          const width = x2 - x1;
+          const height = y2 - y1;
+
+          const color = colors[index % colors.length];
+
+          cameraCtx.strokeStyle = color;
+          cameraCtx.lineWidth = 3;
+          cameraCtx.strokeRect(x1, y1, width, height);
+
+          cameraCtx.fillStyle = color + "1A";
+          cameraCtx.fillRect(x1, y1, width, height);
+
+          const label = `Pessoa ${index + 1} (${(
+            person.confidence * 100
+          ).toFixed(1)}%)`;
+
+          cameraCtx.font = "bold 14px Arial";
+          const textWidth = cameraCtx.measureText(label).width;
+
+          cameraCtx.fillStyle = color;
+          cameraCtx.fillRect(x1, y1 - 25, textWidth + 10, 25);
+
+          cameraCtx.fillStyle = "#FFFFFF";
+          cameraCtx.fillText(label, x1 + 5, y1 - 7);
+        });
       }
-    });
-  </script>
-</body>
+
+      // Mostra pré-visualização da imagem
+      imageInput.addEventListener("change", function (event) {
+        const file = event.target.files[0];
+        if (!file) {
+          preview.src = "#";
+          previewContainer.classList.add("hidden");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.onload = function () {
+            // Ajusta o canvas ao tamanho da imagem exibida
+            canvas.width = preview.offsetWidth;
+            canvas.height = preview.offsetHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          };
+          previewContainer.classList.remove("hidden");
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Função para desenhar todas as bounding boxes
+      function drawAllBoundingBoxes(allPeople) {
+        if (!allPeople || allPeople.length === 0) return;
+
+        const scaleX = preview.offsetWidth / preview.naturalWidth;
+        const scaleY = preview.offsetHeight / preview.naturalHeight;
+
+        // Limpa o canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Desenha cada pessoa detectada
+        allPeople.forEach((person, index) => {
+          const pos = person.position.xyxy;
+          const x1 = pos.x1 * scaleX;
+          const y1 = pos.y1 * scaleY;
+          const x2 = pos.x2 * scaleX;
+          const y2 = pos.y2 * scaleY;
+
+          const width = x2 - x1;
+          const height = y2 - y1;
+
+          // Seleciona uma cor diferente para cada pessoa
+          const color = colors[index % colors.length];
+
+          // Desenha o retângulo
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x1, y1, width, height);
+
+          // Adiciona preenchimento semi-transparente
+          ctx.fillStyle = color + "1A"; // 10% de opacidade
+          ctx.fillRect(x1, y1, width, height);
+
+          // Desenha o label com o número da pessoa e confiança
+          const label = `Pessoa ${index + 1} (${(
+            person.confidence * 100
+          ).toFixed(1)}%)`;
+
+          ctx.font = "bold 14px Arial";
+          const textWidth = ctx.measureText(label).width;
+
+          // Fundo do label
+          ctx.fillStyle = color;
+          ctx.fillRect(x1, y1 - 25, textWidth + 10, 25);
+
+          // Texto do label
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillText(label, x1 + 5, y1 - 7);
+        });
+      }
+
+      // Envia o formulário via fetch (sem recarregar a página)
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        errorBox.classList.add("hidden");
+        resultBox.classList.add("hidden");
+        allPeopleInfo.classList.add("hidden");
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "Classificando...";
+
+        // Limpa o canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const file = imageInput.files[0];
+        if (!file) {
+          errorBox.textContent = "Selecione uma imagem antes de enviar.";
+          errorBox.classList.remove("hidden");
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const csrftoken = getCookie("csrftoken");
+
+        try {
+          const res = await fetch("/", {
+            method: "POST",
+            body: formData,
+            headers: csrftoken ? { "X-CSRFToken": csrftoken } : {},
+          });
+
+          if (!res.ok) {
+            const text = await res.text().catch(() => null);
+            throw new Error(`Erro ${res.status}${text ? ": " + text : ""}`);
+          }
+
+          const data = await res.json();
+
+          classificationText.textContent =
+            data.classification || "Nenhuma pessoa detectada";
+
+          // Se há pessoas detectadas, mostra informações detalhadas
+          if (data.all_people && data.all_people.length > 0) {
+            allPeopleInfo.classList.remove("hidden");
+            peopleList.innerHTML = "";
+
+            // Desenha todas as bounding boxes
+            drawAllBoundingBoxes(data.all_people);
+
+            // Cria card para cada pessoa
+            data.all_people.forEach((person, index) => {
+              const color = colors[index % colors.length];
+              const personCard = document.createElement("div");
+              personCard.className = "bg-gray-50 p-4 rounded border-l-4";
+              personCard.style.borderLeftColor = color;
+
+              personCard.innerHTML = `
+              <div class="flex justify-between items-start mb-2">
+                <h4 class="font-semibold text-lg" style="color: ${color}">Pessoa ${
+                index + 1
+              }</h4>
+                <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                  ${(person.confidence * 100).toFixed(1)}% confiança
+                </span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-sm text-gray-700">
+                <div>
+                  <span class="font-medium">Centro:</span> (${
+                    person.position.xywh.center_x
+                  }, ${person.position.xywh.center_y})
+                </div>
+                <div>
+                  <span class="font-medium">Tamanho:</span> ${
+                    person.position.xywh.width
+                  }×${person.position.xywh.height}
+                </div>
+              </div>
+            `;
+
+              peopleList.appendChild(personCard);
+            });
+          }
+
+          resultBox.classList.remove("hidden");
+          previewContainer.classList.remove("hidden");
+        } catch (err) {
+          console.error(err);
+          errorBox.textContent =
+            "Falha ao classificar a imagem. Verifique o backend.";
+          errorBox.classList.remove("hidden");
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      });
+    </script>
+  </body>
 </html>

@@ -1,0 +1,33 @@
+#previewContainer.hidden {
+  display: none;
+}
+
+#cameraContainer.hidden {
+  display: none;
+}
+
+#imageWrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+#video {
+  max-height: 480px;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+#cameraCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}

@@ -1,6 +1,5 @@
 {% extends 'base.html' %} {% load static %} {% block title %}Início - Object
 Classifier{% endblock %} {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/home.css' %}" />
 {% endblock %} {% block content %}
 <div class="container mx-auto px-4 py-20 max-w-4xl text-center">
   <h1 class="text-5xl font-bold mb-6">Bem-vindo ao detector de pessoas</h1>
@@ -17,7 +16,7 @@ Classifier{% endblock %} {% block extra_css %}
       </p>
       <a
         href="{% url 'upload' %}"
-        class="inline-block bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition"
+        class="inline-block bg-purple-600 text-white px-6 py-3 rounded hover:bg-purple-700 transition"
       >
         Começar Agora
       </a>
@@ -30,34 +29,13 @@ Classifier{% endblock %} {% block extra_css %}
       </p>
       <a
         href="{% url 'camera' %}"
-        class="inline-block bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition"
+        class="inline-block bg-purple-600 text-white px-6 py-3 rounded hover:bg-purple-700 transition"
       >
         Usar Câmera
       </a>
     </div>
   </div>
 
-  <div class="bg-blue-50 p-8 rounded-lg">
-    <h3 class="text-2xl font-semibold mb-4">Recursos</h3>
-    <ul class="text-left max-w-2xl mx-auto space-y-2">
-      <li class="flex items-start">
-        <span class="text-blue-600 mr-2">✓</span>
-        <span>Detecção precisa de pessoas usando YOLO11</span>
-      </li>
-      <li class="flex items-start">
-        <span class="text-blue-600 mr-2">✓</span>
-        <span>Suporte para múltiplas pessoas na mesma imagem</span>
-      </li>
-      <li class="flex items-start">
-        <span class="text-blue-600 mr-2">✓</span>
-        <span>Visualização com bounding boxes coloridas</span>
-      </li>
-      <li class="flex items-start">
-        <span class="text-blue-600 mr-2">✓</span>
-        <span>Detecção em tempo real via câmera</span>
-      </li>
-    </ul>
-  </div>
 </div>
 {% endblock %} {% block extra_js %}
 <script src="{% static 'js/home.js' %}"></script>

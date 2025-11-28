@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 from PIL import Image
 import io
@@ -42,10 +44,12 @@ def detect_people_in_image(image):
 
     return all_people
 
+@method_decorator(csrf_exempt, name='dispatch')
 class HomeView(View):
     def get(self, request):
         return render(request, "home.html")
 
+@method_decorator(csrf_exempt, name='dispatch')
 class UploadView(View):
     def get(self, request):
         return render(request, "upload.html")
@@ -69,6 +73,7 @@ class UploadView(View):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class CameraView(View):
     def get(self, request):
         return render(request, "camera.html")
@@ -91,6 +96,3 @@ class CameraView(View):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
-class AboutView(View):
-    def get(self, request):
-        return render(request, "about.html")

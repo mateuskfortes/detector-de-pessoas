@@ -17,13 +17,13 @@
       <div
         class="container mx-auto px-4 py-4 flex justify-between items-center"
       >
-        <a href="{% url 'home' %}" class="text-xl font-semibold">home</a>
+        <a href="{% url 'home' %}" class="text-xl font-semibold">Início</a>
         <ul class="flex gap-6">
           <li>
             <a
               href="{% url 'upload' %}"
               class="text-gray-700 hover:text-blue-600"
-              >Upload</a
+              >Enviar imagem</a
             >
           </li>
           <li>
@@ -39,11 +39,6 @@
 
     <!-- Main Content -->
     <main>{% block content %}{% endblock %}</main>
-
-    <!-- Footer -->
-    <footer class="bg-white shadow mt-10 py-6 text-center text-gray-500">
-      <small>&copy; 2024 Object Classifier</small>
-    </footer>
 
     {% block extra_js %}{% endblock %}
   </body>
